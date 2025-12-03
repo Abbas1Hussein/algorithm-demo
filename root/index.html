@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي خوارزمية المتوسط الحسابي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fdfbf7; /* Warm neutral background */
+            color: #1f2937;
+        }
+        
+        /* Flowchart Shapes */
+        .fc-node {
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0.5rem;
+            margin: 0.5rem auto;
+            position: relative;
+            background-color: white;
+            z-index: 10;
+            font-size: 0.875rem;
+        }
+
+        .fc-oval {
+            border-radius: 9999px;
+            border: 2px solid #4b5563;
+            width: 120px;
+            height: 50px;
+        }
+
+        .fc-rect {
+            border: 2px solid #4b5563;
+            width: 160px;
+            height: 60px;
+        }
+
+        .fc-parallelogram {
+            transform: skewX(-20deg);
+            border: 2px solid #4b5563;
+            width: 160px;
+            height: 50px;
+            margin-left: 1rem; 
+            margin-right: 1rem;
+        }
+        .fc-parallelogram > div {
+            transform: skewX(20deg);
+        }
+
+        .fc-diamond {
+            width: 100px;
+            height: 100px;
+            transform: rotate(45deg);
+            border: 2px solid #4b5563;
+            margin: 1.5rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fc-diamond > div {
+            transform: rotate(-45deg);
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Connector Lines (Simple Vertical) */
+        .fc-connector {
+            width: 2px;
+            background-color: #9ca3af;
+            height: 20px;
+            margin: 0 auto;
+        }
+
+        /* Active State */
+        .active-node {
+            background-color: #e0f2fe; /* Light blue */
+            border-color: #0284c7;     /* Blue 600 */
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.3);
+            font-weight: bold;
+            transform: scale(1.05);
+        }
+        .fc-parallelogram.active-node {
+            transform: skewX(-20deg) scale(1.05);
+        }
+
+        /* Loop Arrow Simulation */
+        .loop-line-container {
+            position: absolute;
+            right: 50%;
+            top: 25%;
+            bottom: 35%;
+            width: 50%;
+            border-right: 2px dashed #cbd5e1;
+            border-top: 2px dashed #cbd5e1;
+            border-bottom: 2px dashed #cbd5e1;
+            pointer-events: none;
+            z-index: 0;
+            margin-right: 90px; 
+            height: 380px;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+
+</head>
+<body class="bg-[#f8f5f2]">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800">حساب المتوسط الحسابي (Average)</h1>
+            <nav class="hidden md:flex gap-6 text-sm font-semibold text-slate-600">
+                <a href="#concept" class="hover:text-blue-600 transition">المفهوم الرياضي</a>
+                <a href="#simulation" class="hover:text-blue-600 transition">المحاكي التفاعلي</a>
+                <a href="#data" class="hover:text-blue-600 transition">البيانات</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 space-y-12">
+
+        <!-- Intro Section -->
+        <section id="concept" class="max-w-4xl mx-auto text-center space-y-6">
+            <h2 class="text-3xl font-bold text-slate-800">كيف يفكر الكمبيوتر؟</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                في هذا التطبيق، سنقوم بتفكيك عملية حسابية بسيطة: <strong>إيجاد متوسط 30 رقمًا</strong>. 
+                سنحول هذه المهمة من مفهوم رياضي إلى خطوات منطقية (خوارزمية) يمكن للآلة تنفيذها، وسنشاهد كيف تتغير البيانات خطوة بخطوة.
+            </p>
+            
+            <div class="grid md:grid-cols-2 gap-6 mt-8 text-right">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-xl font-bold text-blue-600 mb-3">1. المعادلة الرياضية</h3>
+                    <p class="text-gray-600 mb-4">المتوسط هو نقطة الاتزان لمجموعة من الأرقام. نحسبه بجمع الأرقام ثم قسمتها على عددها.</p>
+                    <div class="bg-slate-50 p-4 rounded-lg text-center font-mono text-lg dir-ltr">
+                        Average = <span class="text-blue-600">Sum</span> / <span class="text-orange-500">N</span>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500 text-center">
+                        حيث <strong>Sum</strong> هو المجموع، و <strong>N</strong> هو عدد العناصر (30).
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-xl font-bold text-green-600 mb-3">2. المنطق البرمجي (الخوارزمية)</h3>
+                    <p class="text-gray-600 mb-4">الكمبيوتر لا يرى كل الأرقام دفعة واحدة. يحتاج إلى:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 marker:text-green-500">
+                        <li>صندوق لتخزين المجموع (Sum) نبدأه بصفر.</li>
+                        <li>عداد (N) لنعرف كم رقمًا تبقى (30).</li>
+                        <li>حلقة تكرار (Loop) لجمع الأرقام واحدًا تلو الآخر.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Algorithm Simulation Section -->
+        <section id="simulation" class="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden">
+            <div class="p-6 border-b border-stone-100 bg-slate-50">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">المختبر التفاعلي للخوارزمية</h2>
+                <p class="text-slate-600">تتبع خطوات الخوارزمية ومخطط الانسياب بالتزامن. اضغط على "الخطوة التالية" لترى كيف يعالج الكمبيوتر الأرقام.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-0">
+                
+                <!-- Left Column: Flowchart Visualization -->
+                <div class="lg:col-span-5 bg-[#f8fafc] p-8 relative min-h-[600px] flex flex-col items-center justify-start overflow-hidden border-l border-stone-200">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 w-full text-center">مخطط الانسياب (Flowchart)</h3>
+                    
+                    <!-- Loop Visual Line -->
+                    <div class="loop-line-container hidden md:block"></div>
+
+                    <!-- Flowchart Nodes -->
+                    <div id="node-start" class="fc-node fc-oval">Start</div>
+                    <div class="fc-connector">↓</div>
+                    
+                    <div id="node-init" class="fc-node fc-rect">
+                        Sum = 0<br>N = 30
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-input" class="fc-node fc-parallelogram">
+                        <div>Input X</div>
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-sum" class="fc-node fc-rect">
+                        Sum = Sum + X
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-dec" class="fc-node fc-rect">
+                        N = N - 1
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-check" class="fc-node fc-diamond">
+                        <div>N ≠ 0 ?</div>
+                    </div>
+                    
+                    <!-- Yes/No Labels -->
+                    <div class="absolute w-full flex justify-between px-10 pointer-events-none" style="top: 480px;">
+                        <span class="text-xs font-bold text-green-600 bg-white px-1 relative left-20">نعم (تكرار)</span>
+                        <span class="text-xs font-bold text-red-600 bg-white px-1">لا (انتهى)</span>
+                    </div>
+
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-calc" class="fc-node fc-rect">
+                        Avg = Sum / 30
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-output" class="fc-node fc-parallelogram">
+                        <div>Output Avg</div>
+                    </div>
+                    <div class="fc-connector">↓</div>
+
+                    <div id="node-end" class="fc-node fc-oval">End</div>
+                </div>
+
+                <!-- Right Column: Control Panel & Variables -->
+                <div class="lg:col-span-7 p-6 md:p-8 flex flex-col gap-8">
+                    
+                    <!-- Controls -->
+                    <div class="flex flex-wrap gap-4 items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <div class="flex gap-2">
+                            <button id="btn-next" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition transform active:scale-95 flex items-center gap-2">
+                                <span>الخطوة التالية</span>
+                                <span>➜</span>
+                            </button>
+                            <button id="btn-auto" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg font-bold transition">
+                                تشغيل تلقائي
+                            </button>
+                        </div>
+                        <button id="btn-reset" class="text-gray-500 hover:text-red-500 font-semibold px-4 py-2 transition text-sm">
+                            إعادة ضبط ⟲
+                        </button>
+                    </div>
+
+                    <!-- Variable Watcher Dashboard -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg relative overflow-hidden group">
+                            <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">المجموع (Sum)</div>
+                            <div id="var-sum" class="text-3xl font-mono font-bold text-green-400">0</div>
+                            <div class="absolute right-0 top-0 h-full w-1 bg-green-500 opacity-20 group-hover:opacity-100 transition"></div>
+                        </div>
+
+                        <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg relative overflow-hidden group">
+                            <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">العداد (N)</div>
+                            <div id="var-n" class="text-3xl font-mono font-bold text-orange-400">?</div>
+                            <div class="text-xs text-slate-500 mt-1">المتبقي من 30</div>
+                            <div class="absolute right-0 top-0 h-full w-1 bg-orange-500 opacity-20 group-hover:opacity-100 transition"></div>
+                        </div>
+
+                        <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg relative overflow-hidden group">
+                            <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">الإدخال الحالي (X)</div>
+                            <div id="var-x" class="text-3xl font-mono font-bold text-blue-400">-</div>
+                            <div class="absolute right-0 top-0 h-full w-1 bg-blue-500 opacity-20 group-hover:opacity-100 transition"></div>
+                        </div>
+
+                        <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg relative overflow-hidden group">
+                            <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">المتوسط (Avg)</div>
+                            <div id="var-avg" class="text-3xl font-mono font-bold text-purple-400">-</div>
+                            <div class="absolute right-0 top-0 h-full w-1 bg-purple-500 opacity-20 group-hover:opacity-100 transition"></div>
+                        </div>
+                    </div>
+
+                    <!-- Current Step Description -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                        <h4 class="font-bold text-amber-800 mb-2 text-lg">📝 شرح الخطوة الحالية:</h4>
+                        <p id="step-description" class="text-amber-900 text-lg leading-relaxed">
+                            اضغط "الخطوة التالية" للبدء في تنفيذ الخوارزمية.
+                        </p>
+                    </div>
+
+                    <!-- Log/History Console -->
+                    <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 p-4 flex flex-col min-h-[150px]">
+                        <div class="text-xs font-bold text-gray-400 uppercase mb-2">سجل العمليات (Log)</div>
+                        <div id="console-log" class="font-mono text-sm text-gray-600 overflow-y-auto max-h-40 space-y-1 pr-2">
+                            <!-- Logs go here -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Analysis Section -->
+        <section id="data" class="space-y-6">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-slate-800">تحليل البيانات (الـ 30 رقمًا)</h2>
+                <p class="text-slate-600">هذه هي الأرقام العشوائية التي تم استخدامها في المثال، وكيف تبدو بصريًا.</p>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-stone-200">
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="numbersChart"></canvas>
+                </div>
+                
+                <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                     <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="text-xs text-gray-500">أقل قيمة</div>
+                        <div class="font-bold text-gray-800">1</div>
+                     </div>
+                     <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="text-xs text-gray-500">أعلى قيمة</div>
+                        <div class="font-bold text-gray-800">99</div>
+                     </div>
+                     <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <div class="text-xs text-blue-500">المجموع الكلي</div>
+                        <div class="font-bold text-blue-800">1328</div>
+                     </div>
+                     <div class="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <div class="text-xs text-purple-500">المتوسط النهائي</div>
+                        <div class="font-bold text-purple-800">44.27</div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 py-8 border-t border-slate-200 mt-12 text-sm">
+        by:AbbasHussein
+        </footer>
+
+    </main>
+
+    <script>
+        // --- DATA ---
+        // The 30 random numbers from the source text
+        const randomNumbers = [45, 9, 87, 12, 60, 33, 91, 5, 78, 26, 1, 54, 10, 88, 3, 99, 40, 15, 62, 71, 29, 50, 83, 17, 95, 2, 44, 38, 70, 6];
+        const totalNumbers = randomNumbers.length; // 30
+        
+        // --- STATE MANAGEMENT ---
+        let state = {
+            stepIndex: 0,
+            numberIndex: 0, // Which number from the array are we processing?
+            sum: 0,
+            n: 30,
+            currentX: null,
+            avg: null,
+            finished: false
+        };
+        
+        let autoPlayInterval = null;
+
+        // --- DOM ELEMENTS ---
+        const ui = {
+            nodes: {
+                start: document.getElementById('node-start'),
+                init: document.getElementById('node-init'),
+                input: document.getElementById('node-input'),
+                sum: document.getElementById('node-sum'),
+                dec: document.getElementById('node-dec'),
+                check: document.getElementById('node-check'),
+                calc: document.getElementById('node-calc'),
+                output: document.getElementById('node-output'),
+                end: document.getElementById('node-end'),
+            },
+            vars: {
+                sum: document.getElementById('var-sum'),
+                n: document.getElementById('var-n'),
+                x: document.getElementById('var-x'),
+                avg: document.getElementById('var-avg'),
+            },
+            desc: document.getElementById('step-description'),
+            log: document.getElementById('console-log'),
+            btns: {
+                next: document.getElementById('btn-next'),
+                auto: document.getElementById('btn-auto'),
+                reset: document.getElementById('btn-reset'),
+            }
+        };
+
+ 
+        function updateUI() {
+            // Update Variables
+            ui.vars.sum.textContent = state.sum;
+            ui.vars.n.textContent = state.n;
+            ui.vars.x.textContent = state.currentX !== null ? state.currentX : '-';
+            ui.vars.avg.textContent = state.avg !== null ? state.avg.toFixed(2) : '-';
+            
+            // Highlight Logic handled by specific step functions
+        }
+
+        function highlightNode(nodeId) {
+            // Remove active class from all
+            Object.values(ui.nodes).forEach(el => el.classList.remove('active-node', 'ring-2', 'ring-blue-400'));
+            // Add to current
+            if (ui.nodes[nodeId]) {
+                ui.nodes[nodeId].classList.add('active-node', 'ring-2', 'ring-blue-400');
+            }
+        }
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.textContent = `> ${msg}`;
+            ui.log.prepend(div);
+        }
+
+        // The Finite State Machine logic for the "Next" button
+        function executeStep() {
+            if (state.finished) return;
+
+            switch(state.stepIndex) {
+                case 0: // Start
+                    highlightNode('start');
+                    ui.desc.textContent = "البداية: النظام جاهز للعمل.";
+                    addLog("Start program");
+                    state.stepIndex = 1;
+                    break;
+
+                case 1: // Init Variables
+                    highlightNode('init');
+                    state.sum = 0;
+                    state.n = 30;
+                    updateUI();
+                    ui.desc.textContent = "التهيئة: تصفير المجموع (Sum = 0) وضبط العداد على 30.";
+                    addLog("Initialize Sum=0, N=30");
+                    state.stepIndex = 2;
+                    break;
+
+                case 2: // Input X
+                    highlightNode('input');
+                    // Get next number from array
+                    state.currentX = randomNumbers[state.numberIndex];
+                    updateUI();
+                    ui.desc.textContent = `إدخال الرقم رقم ${state.numberIndex + 1}: القيمة هي ${state.currentX}.`;
+                    addLog(`Input X = ${state.currentX}`);
+                    state.stepIndex = 3;
+                    break;
+
+                case 3: // Add to Sum
+                    highlightNode('sum');
+                    state.sum += state.currentX;
+                    updateUI();
+                    ui.desc.textContent = `المعالجة: إضافة ${state.currentX} إلى المجموع. المجموع الجديد أصبح ${state.sum}.`;
+                    addLog(`Sum updated to ${state.sum}`);
+                    state.stepIndex = 4;
+                    break;
+
+                case 4: // Decrement N
+                    highlightNode('dec');
+                    state.n -= 1;
+                    state.numberIndex += 1; // Move internal pointer
+                    updateUI();
+                    ui.desc.textContent = `تحديث العداد: إنقاص 1 من N. تبقى ${state.n} أرقام.`;
+                    addLog(`N decremented to ${state.n}`);
+                    state.stepIndex = 5;
+                    break;
+
+                case 5: // Check Condition
+                    highlightNode('check');
+                    if (state.n !== 0) {
+                        ui.desc.textContent = `القرار: هل N لا تساوي صفر؟ (${state.n} ≠ 0). نعم، إذن نعود للخطوة 4 لإدخال رقم جديد.`;
+                        addLog(`Condition N!=0 is TRUE. Looping back.`);
+                        
+                        // User Experience Logic: If we've done 3 iterations, let's fast forward
+                        if (state.numberIndex === 3 && !autoPlayInterval) {
+                            addLog("...تسريع العملية (Fast Forward)...");
+                            alert("لقد رأيت كيف تعمل الحلقة لأول 3 أرقام. سنقوم الآن بحساب الباقي بسرعة.");
+                            // Fast forward math
+                            for (let i = 3; i < 30; i++) {
+                                state.sum += randomNumbers[i];
+                            }
+                            state.n = 0;
+                            state.numberIndex = 30;
+                            state.currentX = randomNumbers[29]; // Last number
+                            state.stepIndex = 5; // Go back to check, which will now fail
+                            updateUI();
+                        } else {
+                            state.stepIndex = 2; // Loop back to Input
+                        }
+                    } else {
+                        ui.desc.textContent = `القرار: هل N لا تساوي صفر؟ (${state.n} ≠ 0). لا (لأنها صفر)، إذن انتهت الحلقة. ننتقل لحساب المتوسط.`;
+                        addLog(`Condition N!=0 is FALSE. Loop finished.`);
+                        state.stepIndex = 6; // Break loop
+                    }
+                    break;
+
+                case 6: // Calculate Average
+                    highlightNode('calc');
+                    state.avg = state.sum / 30;
+                    updateUI();
+                    ui.desc.textContent = `الحساب النهائي: قسمة المجموع (${state.sum}) على 30. النتيجة هي ${state.avg.toFixed(3)}.`;
+                    addLog(`Calculated Average = ${state.avg}`);
+                    state.stepIndex = 7;
+                    break;
+
+                case 7: // Output
+                    highlightNode('output');
+                    ui.desc.textContent = `الإخراج: عرض النتيجة النهائية للمستخدم. المتوسط = ${state.avg.toFixed(3)}`;
+                    addLog(`Output Displayed`);
+                    state.stepIndex = 8;
+                    break;
+
+                case 8: // End
+                    highlightNode('end');
+                    ui.desc.textContent = "النهاية: تم تنفيذ البرنامج بنجاح.";
+                    addLog("End program");
+                    state.finished = true;
+                    ui.btns.next.disabled = true;
+                    ui.btns.next.classList.add('opacity-50', 'cursor-not-allowed');
+                    if(autoPlayInterval) clearInterval(autoPlayInterval);
+                    break;
+            }
+        }
+
+        // --- CHART JS SETUP ---
+        function initChart() {
+            const ctx = document.getElementById('numbersChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: randomNumbers.map((_, i) => `#${i + 1}`),
+                    datasets: [{
+                        label: 'قيمة الرقم',
+                        data: randomNumbers,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)', // Blue-500 transparent
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `الرقم التسلسلي: ${items[0].label}`,
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'القيمة' }
+                        },
+                        x: {
+                            display: false // Hide x labels to reduce clutter for 30 items
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        ui.btns.next.addEventListener('click', executeStep);
+        
+        ui.btns.reset.addEventListener('click', () => {
+            state = { stepIndex: 0, numberIndex: 0, sum: 0, n: 30, currentX: null, avg: null, finished: false };
+            ui.btns.next.disabled = false;
+            ui.btns.next.classList.remove('opacity-50', 'cursor-not-allowed');
+            ui.log.innerHTML = '';
+            ui.desc.textContent = "اضغط 'الخطوة التالية' للبدء.";
+            updateUI();
+            highlightNode(''); // clear highlight
+            if(autoPlayInterval) clearInterval(autoPlayInterval);
+        });
+
+        ui.btns.auto.addEventListener('click', () => {
+            if (state.finished) ui.btns.reset.click();
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            
+            autoPlayInterval = setInterval(() => {
+                if (state.finished) clearInterval(autoPlayInterval);
+                else executeStep();
+            }, 800); // 800ms per step
+        });
+
+        // Initialize
+        initChart();
+        updateUI();
+
+    </script>
+</body>
+</html>
